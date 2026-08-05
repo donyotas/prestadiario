@@ -4,6 +4,7 @@ import { prisma } from '../lib/prisma';
 import { requireAuth, requireRole } from '../middleware/auth';
 import { crearPrestamo, actualizarTasaPrestamo } from '../services/prestamoService';
 import { estadoDisplay } from '../services/cuotaStatus';
+import { generarReportePrestamoPDF } from '../services/reporteService';
 
 const router = Router();
 router.use(requireAuth);
@@ -53,6 +54,23 @@ router.get('/:id', async (req, res) => {
     saldoPendiente: saldoPendiente(prestamo.cuotas),
     cuotas: serializarCuotas(prestamo.cuotas),
   });
+});
+
+router.get('/:id/reporte', async (req, res) => {
+  const id = Number(req.params.id);
+  const prestamo = await prisma.prestamo.findUnique({
+    where: { id },
+    include: {
+      cliente: true,
+      cuotas: { orderBy: { numero: 'asc' }, include: { pagos: { orderBy: { fecha: 'asc' } } } },
+    },
+  });
+  if (!prestamo) return res.status(404).json({ error: 'Préstamo no encontrado' });
+  if (!(await clienteVisible(prestamo.clienteId, req))) {
+    return res.status(403).json({ error: 'No autorizado' });
+  }
+
+  generarReportePrestamoPDF(prestamo, saldoPendiente(prestamo.cuotas), req.user!.nombre, res);
 });
 
 router.get('/:id/cuotas', async (req, res) => {

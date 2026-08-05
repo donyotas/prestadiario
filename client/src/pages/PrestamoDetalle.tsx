@@ -25,6 +25,7 @@ export function PrestamoDetalle() {
   const [pagoActivo, setPagoActivo] = useState<number | null>(null);
   const [monto, setMonto] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [descargando, setDescargando] = useState(false);
 
   function cargar() {
     api.get(`/prestamos/${id}`).then((res) => setPrestamo(res.data));
@@ -34,6 +35,26 @@ export function PrestamoDetalle() {
     cargar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  async function descargarReporte() {
+    setError(null);
+    setDescargando(true);
+    try {
+      const res = await api.get(`/prestamos/${id}/reporte`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `prestamo-${id}-${prestamo?.cliente?.documento ?? ''}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      setError('Error al generar el reporte');
+    } finally {
+      setDescargando(false);
+    }
+  }
 
   async function registrarPago(e: FormEvent, cuotaId: number) {
     e.preventDefault();
@@ -68,9 +89,18 @@ export function PrestamoDetalle() {
     <div>
       <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
         <h1 className="text-lg font-semibold text-slate-900">{prestamo.cliente?.nombre}</h1>
-        <span className={`text-xs px-2 py-1 rounded-full font-medium ${ESTADO_PRESTAMO_COLOR[prestamo.estado]}`}>
-          {prestamo.estado}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className={`text-xs px-2 py-1 rounded-full font-medium ${ESTADO_PRESTAMO_COLOR[prestamo.estado]}`}>
+            {prestamo.estado}
+          </span>
+          <button
+            onClick={descargarReporte}
+            disabled={descargando}
+            className="text-xs px-3 py-1.5 rounded-md border border-slate-300 hover:bg-slate-50 disabled:opacity-50"
+          >
+            {descargando ? 'Generando...' : 'Descargar reporte PDF'}
+          </button>
+        </div>
       </div>
       <p className="text-xs text-slate-500 mb-4">
         Tasa {prestamo.tasaMensual}% mensual · {prestamo.numeroCuotas} cuotas {prestamo.frecuenciaCuota.toLowerCase()}
