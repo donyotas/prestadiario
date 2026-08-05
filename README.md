@@ -56,3 +56,34 @@ npm run prisma:studio --prefix server    # explorador visual de la base de datos
 # Frontend
 npm run build --prefix client            # build de producción
 ```
+
+## Despliegue
+
+En producción, el backend sirve también el build del frontend desde el mismo proceso (un solo
+servicio, sin CORS ni URLs separadas):
+
+```bash
+npm run build   # instala dependencias y compila client/ y server/
+npm start       # aplica migraciones pendientes (prisma migrate deploy) y arranca el servidor
+```
+
+Variables de entorno requeridas en el servicio de producción (ver `server/.env.example`):
+
+- `DATABASE_URL` — para SQLite, `file:./dev.db` (o una ruta dentro de un disco persistente si la
+  plataforma lo soporta; de lo contrario los datos se reinician en cada despliegue).
+- `JWT_SECRET` — un valor secreto propio, distinto al de desarrollo.
+- `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NOMBRE` — usados por `npm run prisma:seed --prefix server`
+  para crear el primer administrador (correrlo una sola vez tras el primer despliegue).
+- `PORT` — la mayoría de plataformas (Railway incluida) la define automáticamente.
+
+### Railway
+
+1. En [railway.app](https://railway.app), *New Project → Deploy from GitHub repo* y selecciona este
+   repositorio.
+2. En la configuración del servicio: *Build Command* `npm run build`, *Start Command* `npm start`.
+3. Agrega las variables de entorno de la lista de arriba.
+4. Tras el primer deploy, corre el seed una vez desde la pestaña *Shell* del servicio en Railway:
+   `npm run prisma:seed --prefix server`.
+5. (Opcional pero recomendado si no es solo una demo) Agrega un *Volume* montado en, por ejemplo,
+   `/data`, y usa `DATABASE_URL=file:/data/prestadiario.db` para que la base de datos SQLite no se
+   pierda en cada redeploy.

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "prisma migrate deploy && node dist/index.js",
     "test": "jest",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "ts-node prisma/seed.ts",
@@ -23,7 +23,8 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
-    "pdfkit": "^0.19.1"
+    "pdfkit": "^0.19.1",
+    "prisma": "^6.19.3"
   },
   "allowScripts": {
     "@prisma/client@6.19.3": true,
@@ -40,7 +41,6 @@
     "@types/node": "^26.1.2",
     "@types/pdfkit": "^0.17.6",
     "jest": "^30.4.2",
-    "prisma": "^6.19.3",
     "ts-jest": "^29.4.12",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
