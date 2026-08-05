@@ -1,0 +1,17 @@
+{
+  "name": "prestadiario",
+  "version": "1.0.0",
+  "description": "Sistema de gestión de préstamos a interés (modelo gota a gota)",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n server,client -c blue,green \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "test": "npm test --prefix server"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "concurrently": "^10.0.4"
+  }
+}

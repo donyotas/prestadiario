@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Rol {
+  ADMIN
+  COBRADOR
+}
+
+enum FrecuenciaCuota {
+  DIARIA
+  SEMANAL
+  MENSUAL
+}
+
+enum EstadoPrestamo {
+  ACTIVO
+  PAGADO
+  ATRASADO
+  CANCELADO
+}
+
+enum EstadoCuota {
+  PENDIENTE
+  PARCIAL
+  PAGADA
+  ATRASADA
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  nombre       String
+  email        String   @unique
+  passwordHash String
+  rol          Rol
+  createdAt    DateTime @default(now())
+
+  clientesAsignados Cliente[]  @relation("CobradorClientes")
+  prestamosCreados  Prestamo[] @relation("PrestamoCreadoPor")
+  pagosRegistrados  Pago[]     @relation("PagoRegistradoPor")
+}
+
+model Cliente {
+  id         Int      @id @default(autoincrement())
+  nombre     String
+  documento  String   @unique
+  telefono   String?
+  direccion  String?
+  cobradorId Int?
+  createdAt  DateTime @default(now())
+
+  cobrador  User?      @relation("CobradorClientes", fields: [cobradorId], references: [id])
+  prestamos Prestamo[]
+}
+
+model Prestamo {
+  id               Int              @id @default(autoincrement())
+  clienteId        Int
+  capital          Float
+  tasaMensual      Float            @default(20)
+  plazoDias        Int
+  numeroCuotas     Int
+  frecuenciaCuota  FrecuenciaCuota
+  fechaInicio      DateTime
+  montoInteres     Float
+  montoTotal       Float
+  estado           EstadoPrestamo   @default(ACTIVO)
+  createdByUserId  Int
+  createdAt        DateTime         @default(now())
+
+  cliente     Cliente @relation(fields: [clienteId], references: [id])
+  createdBy   User    @relation("PrestamoCreadoPor", fields: [createdByUserId], references: [id])
+  cuotas      Cuota[]
+}
+
+model Cuota {
+  id               Int         @id @default(autoincrement())
+  prestamoId       Int
+  numero           Int
+  fechaVencimiento DateTime
+  montoEsperado    Float
+  montoPagado      Float       @default(0)
+  estado           EstadoCuota @default(PENDIENTE)
+
+  prestamo Prestamo @relation(fields: [prestamoId], references: [id])
+  pagos    Pago[]
+
+  @@unique([prestamoId, numero])
+}
+
+model Pago {
+  id                 Int      @id @default(autoincrement())
+  cuotaId            Int
+  monto              Float
+  fecha              DateTime @default(now())
+  registradoPorId    Int
+  nota               String?
+
+  cuota         Cuota @relation(fields: [cuotaId], references: [id])
+  registradoPor User  @relation("PagoRegistradoPor", fields: [registradoPorId], references: [id])
+}
