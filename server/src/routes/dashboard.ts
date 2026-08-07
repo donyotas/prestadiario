@@ -45,4 +45,57 @@ router.get('/resumen', async (req, res) => {
   });
 });
 
+router.get('/clientes', async (req, res) => {
+  const where = req.user!.rol === 'COBRADOR' ? { cobradorId: req.user!.id } : {};
+
+  const clientes = await prisma.cliente.findMany({
+    where,
+    include: {
+      cobrador: { select: { id: true, nombre: true } },
+      prestamos: { where: { estado: { not: 'CANCELADO' } }, include: { cuotas: true } },
+    },
+    orderBy: { nombre: 'asc' },
+  });
+
+  const ahora = new Date();
+
+  const resumen = clientes.map((cliente) => {
+    const prestamosActivos = cliente.prestamos.filter(
+      (p) => p.estado === 'ACTIVO' || p.estado === 'ATRASADO',
+    );
+
+    let saldoPendiente = 0;
+    let cuotasAtrasadas = 0;
+    let proximaCuota: string | null = null;
+
+    for (const p of prestamosActivos) {
+      for (const c of p.cuotas) {
+        saldoPendiente += c.montoEsperado - c.montoPagado;
+        if (estadoDisplay(c, ahora) === 'ATRASADA') cuotasAtrasadas += 1;
+        if (
+          c.estado !== 'PAGADA' &&
+          (proximaCuota === null || c.fechaVencimiento.toISOString() < proximaCuota)
+        ) {
+          proximaCuota = c.fechaVencimiento.toISOString();
+        }
+      }
+    }
+
+    return {
+      id: cliente.id,
+      nombre: cliente.nombre,
+      documento: cliente.documento,
+      telefono: cliente.telefono,
+      cobrador: cliente.cobrador,
+      prestamosActivos: prestamosActivos.length,
+      saldoPendiente: Math.round(saldoPendiente * 100) / 100,
+      cuotasAtrasadas,
+      proximaCuota,
+      estado: cuotasAtrasadas > 0 ? 'ATRASADO' : prestamosActivos.length > 0 ? 'AL_DIA' : 'SIN_PRESTAMOS',
+    };
+  });
+
+  res.json(resumen);
+});
+
 export default router;

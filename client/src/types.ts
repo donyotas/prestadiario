@@ -33,6 +33,19 @@ export interface Cuota {
   estadoActual?: EstadoCuota;
 }
 
+export interface ClienteResumen {
+  id: number;
+  nombre: string;
+  documento: string;
+  telefono: string | null;
+  cobrador: { id: number; nombre: string } | null;
+  prestamosActivos: number;
+  saldoPendiente: number;
+  cuotasAtrasadas: number;
+  proximaCuota: string | null;
+  estado: 'ATRASADO' | 'AL_DIA' | 'SIN_PRESTAMOS';
+}
+
 export interface Prestamo {
   id: number;
   clienteId: number;
