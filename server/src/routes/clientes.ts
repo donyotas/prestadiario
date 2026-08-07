@@ -33,6 +33,9 @@ router.post('/', requireRole('ADMIN'), async (req, res) => {
   if (!nombre || !documento) {
     return res.status(400).json({ error: 'nombre y documento son requeridos' });
   }
+  if (!cobradorId) {
+    return res.status(400).json({ error: 'cobrador es requerido' });
+  }
 
   const existente = await prisma.cliente.findUnique({ where: { documento } });
   if (existente) {
@@ -54,6 +57,10 @@ router.post('/', requireRole('ADMIN'), async (req, res) => {
 router.patch('/:id', requireRole('ADMIN'), async (req, res) => {
   const id = Number(req.params.id);
   const { nombre, documento, telefono, direccion, cobradorId } = req.body ?? {};
+
+  if (cobradorId !== undefined && !cobradorId) {
+    return res.status(400).json({ error: 'cobrador es requerido' });
+  }
 
   const data: {
     nombre?: string;
