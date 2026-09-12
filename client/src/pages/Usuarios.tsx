@@ -85,7 +85,7 @@ export function Usuarios() {
             placeholder="Nombre"
             value={form.nombre}
             onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-            className="border border-slate-300 rounded-md px-3 py-2 text-sm"
+            className="uppercase border border-slate-300 rounded-md px-3 py-2 text-sm"
           />
           <input
             required
@@ -134,7 +134,7 @@ export function Usuarios() {
                 placeholder="Nombre"
                 value={editForm.nombre}
                 onChange={(e) => setEditForm({ ...editForm, nombre: e.target.value })}
-                className="border border-slate-300 rounded-md px-2 py-1.5 text-sm"
+                className="uppercase border border-slate-300 rounded-md px-2 py-1.5 text-sm"
               />
               <input
                 required

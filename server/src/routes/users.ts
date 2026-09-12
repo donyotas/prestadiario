@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../lib/prisma';
+import { enMayusculas } from '../lib/texto';
 import { requireAuth, requireRole } from '../middleware/auth';
 
 const router = Router();
@@ -31,7 +32,7 @@ router.post('/', async (req, res) => {
 
   const passwordHash = await bcrypt.hash(password, 10);
   const user = await prisma.user.create({
-    data: { nombre, email, passwordHash, rol },
+    data: { nombre: enMayusculas(nombre), email, passwordHash, rol },
     select: { id: true, nombre: true, email: true, rol: true, createdAt: true },
   });
   res.status(201).json(user);
@@ -51,7 +52,7 @@ router.patch('/:id', async (req, res) => {
     rol?: 'ADMIN' | 'COBRADOR';
     passwordHash?: string;
   } = {};
-  if (nombre !== undefined) data.nombre = nombre;
+  if (nombre !== undefined) data.nombre = enMayusculas(nombre);
   if (email !== undefined) data.email = email;
   if (rol !== undefined) data.rol = rol;
   if (password) data.passwordHash = await bcrypt.hash(password, 10);

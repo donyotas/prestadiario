@@ -48,6 +48,9 @@ El frontend redirige las peticiones a `/api` hacia `http://localhost:4000` (conf
   - **Administrador**: gestiona clientes, préstamos (incluye editar la tasa mientras no tenga
     pagos registrados), usuarios y ve toda la cartera.
   - **Cobrador**: solo ve los clientes que tiene asignados y registra los pagos de sus cuotas.
+- Los nombres de clientes y usuarios se guardan siempre en mayúsculas sostenidas, sin espacios
+  sobrantes. La normalización la hace el servidor al crear o editar (`server/src/lib/texto.ts`),
+  así que aplica venga la petición de donde venga.
 
 ## Comandos útiles
 
@@ -56,6 +59,7 @@ El frontend redirige las peticiones a `/api` hacia `http://localhost:4000` (conf
 npm test --prefix server                 # tests unitarios (cálculo de intereses/cronograma)
 npm run build --prefix server            # compila TypeScript a dist/
 npm run prisma:studio --prefix server    # explorador visual de la base de datos
+npm run nombres:mayusculas --prefix server # normaliza nombres ya existentes
 
 # Frontend
 npm run build --prefix client            # build de producción

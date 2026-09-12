@@ -11,6 +11,7 @@
     "test": "jest",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "ts-node prisma/seed.ts",
+    "nombres:mayusculas": "ts-node prisma/normalizarNombres.ts",
     "prisma:studio": "prisma studio",
     "prisma:schema": "prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script --output prisma/schema.sql"
   },

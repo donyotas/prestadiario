@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
+import { enMayusculas } from '../lib/texto';
 import { requireAuth, requireRole } from '../middleware/auth';
 
 const router = Router();
@@ -44,7 +45,7 @@ router.post('/', requireRole('ADMIN'), async (req, res) => {
 
   const cliente = await prisma.cliente.create({
     data: {
-      nombre,
+      nombre: enMayusculas(nombre),
       documento,
       telefono: telefono ?? null,
       direccion: direccion ?? null,
@@ -69,7 +70,7 @@ router.patch('/:id', requireRole('ADMIN'), async (req, res) => {
     direccion?: string | null;
     cobradorId?: number | null;
   } = {};
-  if (nombre !== undefined) data.nombre = nombre;
+  if (nombre !== undefined) data.nombre = enMayusculas(nombre);
   if (documento !== undefined) data.documento = documento;
   if (telefono !== undefined) data.telefono = telefono;
   if (direccion !== undefined) data.direccion = direccion;

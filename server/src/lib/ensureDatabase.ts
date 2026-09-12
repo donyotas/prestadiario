@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { createClient } from '@libsql/client';
 import { libsqlConfig } from './dbConfig';
 import { prisma } from './prisma';
+import { enMayusculas } from './texto';
 
 // El CLI de Prisma (prisma migrate) no puede hablar el protocolo HTTP de Turso,
 // así que el esquema se aplica aquí a partir del DDL generado con:
@@ -30,7 +31,7 @@ export async function ensureDatabase(): Promise<void> {
   if ((await prisma.user.count()) === 0) {
     const email = process.env.ADMIN_EMAIL ?? 'admin@prestadiario.local';
     const password = process.env.ADMIN_PASSWORD ?? 'admin1234';
-    const nombre = process.env.ADMIN_NOMBRE ?? 'Administrador';
+    const nombre = enMayusculas(process.env.ADMIN_NOMBRE ?? 'Administrador');
 
     await prisma.user.create({
       data: {
