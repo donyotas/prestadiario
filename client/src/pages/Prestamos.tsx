@@ -24,9 +24,9 @@ export function Prestamos() {
   const [form, setForm] = useState({
     clienteId: clienteIdFiltro ?? '',
     capital: '',
-    tasaMensual: '20',
-    plazoDias: '30',
-    numeroCuotas: '30',
+    tasaMensual: '',
+    plazoDias: '',
+    numeroCuotas: '',
     frecuenciaCuota: 'DIARIA',
     fechaInicio: new Date().toISOString().slice(0, 10),
   });
@@ -51,9 +51,10 @@ export function Prestamos() {
       await api.post('/prestamos', {
         clienteId: Number(form.clienteId),
         capital: Number(form.capital),
-        tasaMensual: Number(form.tasaMensual),
-        plazoDias: Number(form.plazoDias),
-        numeroCuotas: Number(form.numeroCuotas),
+        // Si se dejan en blanco se aplican los valores por defecto del negocio.
+        tasaMensual: form.tasaMensual === '' ? 20 : Number(form.tasaMensual),
+        plazoDias: form.plazoDias === '' ? 30 : Number(form.plazoDias),
+        numeroCuotas: form.numeroCuotas === '' ? 30 : Number(form.numeroCuotas),
         frecuenciaCuota: form.frecuenciaCuota,
         fechaInicio: form.fechaInicio,
       });
@@ -107,29 +108,26 @@ export function Prestamos() {
             className="border border-slate-300 rounded-md px-3 py-2 text-sm"
           />
           <input
-            required
             type="number"
             min="0"
             step="0.1"
-            placeholder="Tasa mensual %"
+            placeholder="Tasa mensual % (20)"
             value={form.tasaMensual}
             onChange={(e) => setForm({ ...form, tasaMensual: e.target.value })}
             className="border border-slate-300 rounded-md px-3 py-2 text-sm"
           />
           <input
-            required
             type="number"
             min="1"
-            placeholder="Plazo (días)"
+            placeholder="Plazo en días (30)"
             value={form.plazoDias}
             onChange={(e) => setForm({ ...form, plazoDias: e.target.value })}
             className="border border-slate-300 rounded-md px-3 py-2 text-sm"
           />
           <input
-            required
             type="number"
             min="1"
-            placeholder="Número de cuotas"
+            placeholder="Número de cuotas (30)"
             value={form.numeroCuotas}
             onChange={(e) => setForm({ ...form, numeroCuotas: e.target.value })}
             className="border border-slate-300 rounded-md px-3 py-2 text-sm"
