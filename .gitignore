@@ -1,2 +1,5 @@
 node_modules
 .npm-cache
+
+# Paquetes de despliegue generados con el build (no son fuente).
+*.zip

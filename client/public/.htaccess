@@ -1,0 +1,31 @@
+# Reglas para el hosting estatico (Apache / LiteSpeed, como Hostinger).
+#
+# La app es una SPA de React con rutas como /clientes, /prestamos o /cuotas.
+# Esas rutas no existen como archivos en el disco, asi que sin estas reglas el
+# servidor devolveria 404 al recargar la pagina o al abrir un enlace directo.
+# Aqui se reescriben hacia index.html y el router de React resuelve la ruta.
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # Si el archivo o la carpeta existen de verdad, se sirven tal cual.
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Todo lo demas va a la aplicacion.
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+# Los archivos de /assets llevan un hash en el nombre, asi que se pueden cachear
+# de forma agresiva. index.html y config.js NO, para que un despliegue nuevo se
+# vea de inmediato.
+<IfModule mod_headers.c>
+  <FilesMatch "\.(js|css|svg|png|jpg|jpeg|webp|woff2?)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  <FilesMatch "^(index\.html|config\.js)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+</IfModule>

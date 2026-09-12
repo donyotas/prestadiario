@@ -1,11 +1,23 @@
 import axios from 'axios';
 
-// En desarrollo local, Vite redirige '/api' hacia el backend local (ver vite.config.ts)
-// así que no hace falta configurar nada.
-// En producción (ej. Firebase Hosting), el frontend ya no comparte dominio con el
-// backend, así que necesitamos la URL completa. Defínela en client/.env como:
-//   VITE_API_URL=https://tu-backend.up.railway.app/api
-const baseURL = import.meta.env.VITE_API_URL || '/api';
+declare global {
+  interface Window {
+    __PRESTADIARIO_API_URL__?: string;
+  }
+}
+
+// La URL del backend se resuelve en tres pasos, de mas a menos especifico:
+//
+// 1. `public/config.js` (window.__PRESTADIARIO_API_URL__): se edita en el
+//    servidor despues de publicar, asi que cambiar de backend no obliga a
+//    volver a compilar el cliente.
+// 2. `VITE_API_URL`: lo incrusta Vite al compilar (client/.env.production).
+// 3. '/api': el mismo dominio. Es el caso del despliegue de un solo servicio,
+//    y tambien el de desarrollo local, donde Vite redirige /api a :4000
+//    (ver vite.config.ts).
+const runtimeUrl =
+  typeof window === 'undefined' ? '' : (window.__PRESTADIARIO_API_URL__ ?? '');
+const baseURL = runtimeUrl || import.meta.env.VITE_API_URL || '/api';
 
 const api = axios.create({ baseURL });
 
