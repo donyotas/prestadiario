@@ -98,23 +98,41 @@ export function Clientes() {
     }
   }
 
-  // Monto de préstamos por cliente. Se excluyen los cancelados, igual que en el
-  // resto de la app; los clientes sin préstamos quedan en cero.
-  const montosPorCliente = new Map<number, { cantidad: number; monto: number }>();
+  // Monto de préstamos por cliente, desglosado en pagados y activos. Se excluyen
+  // los cancelados, igual que en el resto de la app; los clientes sin préstamos
+  // quedan en cero.
+  const montosPorCliente = new Map<
+    number,
+    { cantidad: number; pagados: number; activos: number }
+  >();
   for (const p of prestamos) {
     if (p.estado === 'CANCELADO') continue;
-    const acumulado = montosPorCliente.get(p.clienteId) ?? { cantidad: 0, monto: 0 };
+    const acumulado = montosPorCliente.get(p.clienteId) ?? {
+      cantidad: 0,
+      pagados: 0,
+      activos: 0,
+    };
     acumulado.cantidad += 1;
-    acumulado.monto += p.montoTotal;
+    if (p.estado === 'PAGADO') acumulado.pagados += p.montoTotal;
+    else acumulado.activos += p.montoTotal; // ACTIVO o ATRASADO
     montosPorCliente.set(p.clienteId, acumulado);
   }
 
   const resumenPorCliente = clientes
-    .map((c) => ({ cliente: c, ...(montosPorCliente.get(c.id) ?? { cantidad: 0, monto: 0 }) }))
-    .sort((a, b) => b.monto - a.monto);
+    .map((c) => ({
+      cliente: c,
+      ...(montosPorCliente.get(c.id) ?? { cantidad: 0, pagados: 0, activos: 0 }),
+    }))
+    .sort((a, b) => b.pagados + b.activos - (a.pagados + a.activos));
 
-  const totalGeneral = resumenPorCliente.reduce((acc, r) => acc + r.monto, 0);
-  const totalPrestamos = resumenPorCliente.reduce((acc, r) => acc + r.cantidad, 0);
+  const totales = resumenPorCliente.reduce(
+    (acc, r) => ({
+      cantidad: acc.cantidad + r.cantidad,
+      pagados: acc.pagados + r.pagados,
+      activos: acc.activos + r.activos,
+    }),
+    { cantidad: 0, pagados: 0, activos: 0 },
+  );
 
   return (
     <div>
@@ -141,7 +159,9 @@ export function Clientes() {
                 <tr className="border-b border-slate-200 text-left text-xs text-slate-500">
                   <th className="px-4 py-2 font-medium">Cliente</th>
                   <th className="px-4 py-2 font-medium text-right">Préstamos</th>
-                  <th className="px-4 py-2 font-medium text-right">Monto total</th>
+                  <th className="px-4 py-2 font-medium text-right">Pagados</th>
+                  <th className="px-4 py-2 font-medium text-right">Activos</th>
+                  <th className="px-4 py-2 font-medium text-right">Total</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -152,8 +172,14 @@ export function Clientes() {
                       <p className="text-xs text-slate-500">{r.cliente.documento}</p>
                     </td>
                     <td className="px-4 py-3 text-right text-slate-600">{r.cantidad}</td>
+                    <td className="px-4 py-3 text-right text-slate-600">
+                      {formatoMoneda(r.pagados)}
+                    </td>
+                    <td className="px-4 py-3 text-right text-slate-600">
+                      {formatoMoneda(r.activos)}
+                    </td>
                     <td className="px-4 py-3 text-right font-medium text-slate-900">
-                      {formatoMoneda(r.monto)}
+                      {formatoMoneda(r.pagados + r.activos)}
                     </td>
                   </tr>
                 ))}
@@ -162,10 +188,16 @@ export function Clientes() {
                 <tr className="border-t border-slate-200 bg-slate-50">
                   <td className="px-4 py-3 text-xs font-medium text-slate-500">Total</td>
                   <td className="px-4 py-3 text-right text-sm font-medium text-slate-700">
-                    {totalPrestamos}
+                    {totales.cantidad}
+                  </td>
+                  <td className="px-4 py-3 text-right text-sm font-medium text-slate-700">
+                    {formatoMoneda(totales.pagados)}
+                  </td>
+                  <td className="px-4 py-3 text-right text-sm font-medium text-slate-700">
+                    {formatoMoneda(totales.activos)}
                   </td>
                   <td className="px-4 py-3 text-right text-sm font-bold text-slate-900">
-                    {formatoMoneda(totalGeneral)}
+                    {formatoMoneda(totales.pagados + totales.activos)}
                   </td>
                 </tr>
               </tfoot>
