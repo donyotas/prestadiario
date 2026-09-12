@@ -84,6 +84,27 @@ export function Prestamos() {
     }
   }
 
+  // Resumen de lo que se está mostrando: si la lista está filtrada por cliente,
+  // los totales corresponden a ese cliente.
+  const resumen = visibles.reduce(
+    (acc, p) => {
+      // Los préstamos cancelados no cuentan en ningún total.
+      if (p.estado === 'CANCELADO') return acc;
+
+      acc.total += p.montoTotal;
+      if (p.estado === 'PAGADO') acc.pagados += p.montoTotal;
+      else acc.activos += p.montoTotal; // ACTIVO o ATRASADO
+      return acc;
+    },
+    { total: 0, pagados: 0, activos: 0 },
+  );
+
+  const tarjetas = [
+    { label: 'Total préstamos', valor: formatoMoneda(resumen.total) },
+    { label: 'Pagados', valor: formatoMoneda(resumen.pagados) },
+    { label: 'Activos', valor: formatoMoneda(resumen.activos) },
+  ];
+
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
@@ -96,6 +117,15 @@ export function Prestamos() {
             {showForm ? 'Cancelar' : 'Nuevo préstamo'}
           </button>
         )}
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        {tarjetas.map((t) => (
+          <div key={t.label} className="bg-white rounded-lg border border-slate-200 p-4">
+            <p className="text-xs text-slate-500">{t.label}</p>
+            <p className="text-xl font-bold text-slate-900 mt-1">{t.valor}</p>
+          </div>
+        ))}
       </div>
 
       {showForm && (
