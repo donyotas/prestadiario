@@ -10,8 +10,18 @@ import prestamosRouter from './routes/prestamos';
 import cuotasRouter from './routes/cuotas';
 import dashboardRouter from './routes/dashboard';
 import { ensureDatabase } from './lib/ensureDatabase';
+import { apiLimiter, loginLimiter, securityHeaders } from './middleware/security';
 
 const app = express();
+
+// En Railway/Render la app vive detrás de un proxy, así que la IP real del
+// cliente llega en X-Forwarded-For. Sin esto, el rate limiting vería siempre
+// la IP del proxy y contaría las peticiones de todos los usuarios como si
+// fueran de uno solo.
+app.set('trust proxy', 1);
+
+// Cabeceras de seguridad (CSP, HSTS, nosniff, etc.) para todas las respuestas.
+app.use(securityHeaders);
 
 // Orígenes permitidos: tu Firebase Hosting en producción + localhost en desarrollo.
 // Puedes sobreescribir/ampliar la lista con la variable de entorno CORS_ORIGINS
@@ -39,6 +49,11 @@ app.use(
   })
 );
 app.use(express.json());
+
+// Límites de peticiones: uno general para toda la API y otro mucho más
+// estricto para el login, que es la única puerta sin token.
+app.use('/api', apiLimiter);
+app.use('/api/auth/login', loginLimiter);
 
 app.use('/api/auth', authRouter);
 app.use('/api/users', usersRouter);
