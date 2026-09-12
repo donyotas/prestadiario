@@ -11,7 +11,32 @@ import cuotasRouter from './routes/cuotas';
 import dashboardRouter from './routes/dashboard';
 
 const app = express();
-app.use(cors());
+
+// Orígenes permitidos: tu Firebase Hosting en producción + localhost en desarrollo.
+// Puedes sobreescribir/ampliar la lista con la variable de entorno CORS_ORIGINS
+// (separada por comas), por ejemplo:
+// CORS_ORIGINS=https://prestadiario-3756c.web.app,https://prestadiario-3756c.firebaseapp.com
+const defaultOrigins = [
+  'http://localhost:5173',
+  'https://prestadiario-3756c.web.app',
+  'https://prestadiario-3756c.firebaseapp.com',
+];
+const allowedOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',').map((o) => o.trim())
+  : defaultOrigins;
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      // Permite peticiones sin origin (ej. curl, health checks) y las de la lista.
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`Origen no permitido por CORS: ${origin}`));
+      }
+    },
+  })
+);
 app.use(express.json());
 
 app.use('/api/auth', authRouter);
