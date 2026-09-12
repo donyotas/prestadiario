@@ -96,9 +96,16 @@ export function PrestamoDetalle() {
           <button
             onClick={descargarReporte}
             disabled={descargando}
-            className="text-xs px-3 py-1.5 rounded-md border border-slate-300 hover:bg-slate-50 disabled:opacity-50"
+            className="text-xs px-3 py-2 rounded-md border border-slate-300 hover:bg-slate-50 disabled:opacity-50"
           >
-            {descargando ? 'Generando...' : 'Descargar reporte PDF'}
+            {descargando ? (
+              'Generando...'
+            ) : (
+              <>
+                <span className="hidden sm:inline">Descargar reporte PDF</span>
+                <span className="sm:hidden">Reporte PDF</span>
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -154,7 +161,7 @@ export function PrestamoDetalle() {
                         setPagoActivo(c.id);
                         setMonto(String(saldo));
                       }}
-                      className="text-xs px-2 py-1 rounded-md border border-slate-300 hover:bg-slate-50"
+                      className="text-xs px-3 py-2 rounded-md border border-slate-300 hover:bg-slate-50"
                     >
                       Registrar pago
                     </button>
@@ -178,14 +185,14 @@ export function PrestamoDetalle() {
                   <div className="flex items-center gap-2">
                     <button
                       type="submit"
-                      className="bg-slate-900 text-white text-xs px-3 py-1.5 rounded-md"
+                      className="bg-slate-900 text-white text-xs px-4 py-2 rounded-md"
                     >
                       Confirmar
                     </button>
                     <button
                       type="button"
                       onClick={() => setPagoActivo(null)}
-                      className="text-xs text-slate-500"
+                      className="text-xs text-slate-500 px-2 py-2"
                     >
                       Cancelar
                     </button>

@@ -51,17 +51,74 @@ export function Dashboard() {
   return (
     <div>
       <h1 className="text-lg font-semibold text-slate-900 mb-4">Dashboard</h1>
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4">
         {tarjetas.map((t) => (
-          <div key={t.label} className="bg-white rounded-lg border border-slate-200 p-4">
+          <div key={t.label} className="bg-white rounded-lg border border-slate-200 p-3 sm:p-4">
             <p className="text-xs text-slate-500">{t.label}</p>
-            <p className="text-xl font-bold text-slate-900 mt-1">{t.valor}</p>
+            <p className="text-base sm:text-xl font-bold text-slate-900 mt-1 break-words">
+              {t.valor}
+            </p>
           </div>
         ))}
       </div>
 
       <h2 className="text-base font-semibold text-slate-900 mt-8 mb-3">Clientes</h2>
-      <div className="bg-white rounded-lg border border-slate-200 overflow-x-auto">
+
+      {/* Móvil: tarjetas. Una tabla de 7 columnas es ilegible en un teléfono. */}
+      <div className="md:hidden bg-white rounded-lg border border-slate-200 divide-y divide-slate-100">
+        {clientes?.map((c) => (
+          <Link
+            key={c.id}
+            to={`/prestamos?clienteId=${c.id}`}
+            className="block px-4 py-3 active:bg-slate-50"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-medium text-slate-900 truncate">{c.nombre}</p>
+                <p className="text-xs text-slate-500 truncate">{c.documento}</p>
+              </div>
+              <span
+                className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${ESTADO_BADGE[c.estado]}`}
+              >
+                {ESTADO_LABEL[c.estado]}
+              </span>
+            </div>
+            <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+              <div className="min-w-0">
+                <dt className="text-slate-500">Cobrador</dt>
+                <dd className="text-slate-900 truncate">{c.cobrador?.nombre ?? 'Sin cobrador'}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Próxima cuota</dt>
+                <dd className="text-slate-900">{formatoFecha(c.proximaCuota)}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Préstamos activos</dt>
+                <dd className="text-slate-900">{c.prestamosActivos}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Cuotas atrasadas</dt>
+                <dd className={c.cuotasAtrasadas > 0 ? 'text-red-600 font-medium' : 'text-slate-400'}>
+                  {c.cuotasAtrasadas}
+                </dd>
+              </div>
+              <div className="col-span-2">
+                <dt className="text-slate-500">Saldo pendiente</dt>
+                <dd className="text-sm font-semibold text-slate-900">
+                  {formatoMoneda(c.saldoPendiente)}
+                </dd>
+              </div>
+            </dl>
+          </Link>
+        ))}
+        {clientes?.length === 0 && (
+          <p className="px-4 py-6 text-sm text-slate-500">No hay clientes aún.</p>
+        )}
+        {clientes === null && <p className="px-4 py-6 text-sm text-slate-500">Cargando clientes...</p>}
+      </div>
+
+      {/* Escritorio: tabla completa. */}
+      <div className="hidden md:block bg-white rounded-lg border border-slate-200 overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-left text-xs text-slate-500">

@@ -112,7 +112,7 @@ export function Prestamos() {
         {user?.rol === 'ADMIN' && (
           <button
             onClick={() => setShowForm((v) => !v)}
-            className="bg-slate-900 text-white text-sm px-3 py-1.5 rounded-md"
+            className="shrink-0 bg-slate-900 text-white text-sm px-4 py-2 rounded-md"
           >
             {showForm ? 'Cancelar' : 'Nuevo préstamo'}
           </button>
@@ -222,7 +222,7 @@ export function Prestamos() {
           {error && <p className="sm:col-span-2 text-sm text-red-600">{error}</p>}
           <button
             type="submit"
-            className="sm:col-span-2 bg-slate-900 text-white rounded-md py-2 text-sm font-medium"
+            className="sm:col-span-2 bg-slate-900 text-white rounded-md py-2.5 text-sm font-medium"
           >
             Crear préstamo
           </button>

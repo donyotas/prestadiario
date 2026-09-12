@@ -141,7 +141,7 @@ export function Clientes() {
         {user?.rol === 'ADMIN' && (
           <button
             onClick={() => setShowForm((v) => !v)}
-            className="bg-slate-900 text-white text-sm px-3 py-1.5 rounded-md"
+            className="shrink-0 bg-slate-900 text-white text-sm px-4 py-2 rounded-md"
           >
             {showForm ? 'Cancelar' : 'Nuevo cliente'}
           </button>
@@ -153,56 +153,102 @@ export function Clientes() {
           Monto de préstamos por cliente
         </p>
         {resumenPorCliente.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 text-left text-xs text-slate-500">
-                  <th className="px-4 py-2 font-medium">Cliente</th>
-                  <th className="px-4 py-2 font-medium text-right">Préstamos</th>
-                  <th className="px-4 py-2 font-medium text-right">Pagados</th>
-                  <th className="px-4 py-2 font-medium text-right">Activos</th>
-                  <th className="px-4 py-2 font-medium text-right">Total</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {resumenPorCliente.map((r) => (
-                  <tr key={r.cliente.id} className="hover:bg-slate-50">
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-slate-900">{r.cliente.nombre}</p>
-                      <p className="text-xs text-slate-500">{r.cliente.documento}</p>
-                    </td>
-                    <td className="px-4 py-3 text-right text-slate-600">{r.cantidad}</td>
-                    <td className="px-4 py-3 text-right text-slate-600">
-                      {formatoMoneda(r.pagados)}
-                    </td>
-                    <td className="px-4 py-3 text-right text-slate-600">
-                      {formatoMoneda(r.activos)}
-                    </td>
-                    <td className="px-4 py-3 text-right font-medium text-slate-900">
+          <>
+            {/* Móvil: tarjetas. Una tabla de 5 columnas no cabe en un teléfono. */}
+            <div className="sm:hidden divide-y divide-slate-100">
+              {resumenPorCliente.map((r) => (
+                <div key={r.cliente.id} className="px-4 py-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-medium text-slate-900 truncate">{r.cliente.nombre}</p>
+                      <p className="text-xs text-slate-500 truncate">{r.cliente.documento}</p>
+                    </div>
+                    <p className="shrink-0 text-sm font-bold text-slate-900">
                       {formatoMoneda(r.pagados + r.activos)}
+                    </p>
+                  </div>
+                  <dl className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                    <div className="flex gap-1">
+                      <dt className="text-slate-500">Préstamos</dt>
+                      <dd className="font-medium text-slate-900">{r.cantidad}</dd>
+                    </div>
+                    <div className="flex gap-1">
+                      <dt className="text-slate-500">Pagados</dt>
+                      <dd className="font-medium text-slate-700">{formatoMoneda(r.pagados)}</dd>
+                    </div>
+                    <div className="flex gap-1">
+                      <dt className="text-slate-500">Activos</dt>
+                      <dd className="font-medium text-slate-700">{formatoMoneda(r.activos)}</dd>
+                    </div>
+                  </dl>
+                </div>
+              ))}
+              <div className="px-4 py-3 bg-slate-50 flex items-start justify-between gap-3">
+                <div className="min-w-0 text-xs text-slate-500">
+                  <p className="font-semibold text-slate-700">Total</p>
+                  <p>
+                    {totales.cantidad} préstamos · Pagados {formatoMoneda(totales.pagados)} ·
+                    Activos {formatoMoneda(totales.activos)}
+                  </p>
+                </div>
+                <p className="shrink-0 text-sm font-bold text-slate-900">
+                  {formatoMoneda(totales.pagados + totales.activos)}
+                </p>
+              </div>
+            </div>
+
+            {/* Escritorio: tabla completa. */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 text-left text-xs text-slate-500">
+                    <th className="px-4 py-2 font-medium">Cliente</th>
+                    <th className="px-4 py-2 font-medium text-right">Préstamos</th>
+                    <th className="px-4 py-2 font-medium text-right">Pagados</th>
+                    <th className="px-4 py-2 font-medium text-right">Activos</th>
+                    <th className="px-4 py-2 font-medium text-right">Total</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {resumenPorCliente.map((r) => (
+                    <tr key={r.cliente.id} className="hover:bg-slate-50">
+                      <td className="px-4 py-3">
+                        <p className="font-medium text-slate-900">{r.cliente.nombre}</p>
+                        <p className="text-xs text-slate-500">{r.cliente.documento}</p>
+                      </td>
+                      <td className="px-4 py-3 text-right text-slate-600">{r.cantidad}</td>
+                      <td className="px-4 py-3 text-right text-slate-600">
+                        {formatoMoneda(r.pagados)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-slate-600">
+                        {formatoMoneda(r.activos)}
+                      </td>
+                      <td className="px-4 py-3 text-right font-medium text-slate-900">
+                        {formatoMoneda(r.pagados + r.activos)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t border-slate-200 bg-slate-50">
+                    <td className="px-4 py-3 text-xs font-medium text-slate-500">Total</td>
+                    <td className="px-4 py-3 text-right text-sm font-medium text-slate-700">
+                      {totales.cantidad}
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm font-medium text-slate-700">
+                      {formatoMoneda(totales.pagados)}
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm font-medium text-slate-700">
+                      {formatoMoneda(totales.activos)}
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm font-bold text-slate-900">
+                      {formatoMoneda(totales.pagados + totales.activos)}
                     </td>
                   </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr className="border-t border-slate-200 bg-slate-50">
-                  <td className="px-4 py-3 text-xs font-medium text-slate-500">Total</td>
-                  <td className="px-4 py-3 text-right text-sm font-medium text-slate-700">
-                    {totales.cantidad}
-                  </td>
-                  <td className="px-4 py-3 text-right text-sm font-medium text-slate-700">
-                    {formatoMoneda(totales.pagados)}
-                  </td>
-                  <td className="px-4 py-3 text-right text-sm font-medium text-slate-700">
-                    {formatoMoneda(totales.activos)}
-                  </td>
-                  <td className="px-4 py-3 text-right text-sm font-bold text-slate-900">
-                    {formatoMoneda(totales.pagados + totales.activos)}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
+                </tfoot>
+              </table>
+            </div>
+          </>
         ) : (
           <p className="px-4 py-6 text-sm text-slate-500">No hay clientes aún.</p>
         )}
@@ -257,7 +303,7 @@ export function Clientes() {
           {error && <p className="sm:col-span-2 text-sm text-red-600">{error}</p>}
           <button
             type="submit"
-            className="sm:col-span-2 bg-slate-900 text-white rounded-md py-2 text-sm font-medium"
+            className="sm:col-span-2 bg-slate-900 text-white rounded-md py-2.5 text-sm font-medium"
           >
             Guardar
           </button>
@@ -334,22 +380,22 @@ export function Clientes() {
             <Link
               key={c.id}
               to={`/prestamos?clienteId=${c.id}`}
-              className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 px-4 py-3 hover:bg-slate-50"
+              className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 py-3 hover:bg-slate-50 active:bg-slate-100"
             >
-              <div>
-                <p className="text-sm font-medium text-slate-900">{c.nombre}</p>
-                <p className="text-xs text-slate-500">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-slate-900 truncate">{c.nombre}</p>
+                <p className="text-xs text-slate-500 truncate">
                   {c.documento} · {c.telefono ?? 'sin teléfono'}
                 </p>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-slate-500">
+              <div className="flex items-center justify-between sm:justify-end gap-3">
+                <span className="text-xs text-slate-500 truncate">
                   {c.cobrador?.nombre ?? 'Sin cobrador'}
                 </span>
                 {user?.rol === 'ADMIN' && (
                   <button
                     onClick={(e) => startEdit(e, c)}
-                    className="text-xs px-2 py-1 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-100"
+                    className="shrink-0 text-xs px-3 py-2 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-100"
                   >
                     Editar
                   </button>

@@ -28,7 +28,7 @@ export function Login() {
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
       <form
         onSubmit={handleSubmit}
-        className="bg-white shadow rounded-lg p-8 w-full max-w-sm space-y-4"
+        className="bg-white shadow rounded-lg p-6 sm:p-8 w-full max-w-sm space-y-4"
       >
         <img
           src="/logo.png"
@@ -59,7 +59,7 @@ export function Login() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-slate-900 text-white rounded-md py-2 text-sm font-medium disabled:opacity-50"
+          className="w-full bg-slate-900 text-white rounded-md py-3 text-sm font-medium disabled:opacity-50"
         >
           {loading ? 'Ingresando...' : 'Ingresar'}
         </button>

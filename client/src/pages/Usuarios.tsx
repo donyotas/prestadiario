@@ -69,7 +69,7 @@ export function Usuarios() {
         <h1 className="text-lg font-semibold text-slate-900">Usuarios</h1>
         <button
           onClick={() => setShowForm((v) => !v)}
-          className="bg-slate-900 text-white text-sm px-3 py-1.5 rounded-md"
+          className="shrink-0 bg-slate-900 text-white text-sm px-4 py-2 rounded-md"
         >
           {showForm ? 'Cancelar' : 'Nuevo usuario'}
         </button>
@@ -114,7 +114,7 @@ export function Usuarios() {
           {error && <p className="sm:col-span-2 text-sm text-red-600">{error}</p>}
           <button
             type="submit"
-            className="sm:col-span-2 bg-slate-900 text-white rounded-md py-2 text-sm font-medium"
+            className="sm:col-span-2 bg-slate-900 text-white rounded-md py-2.5 text-sm font-medium"
           >
             Guardar
           </button>
@@ -179,19 +179,19 @@ export function Usuarios() {
           ) : (
             <div
               key={u.id}
-              className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 px-4 py-3"
+              className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 py-3"
             >
-              <div>
-                <p className="text-sm font-medium text-slate-900">{u.nombre}</p>
-                <p className="text-xs text-slate-500">{u.email}</p>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-slate-900 truncate">{u.nombre}</p>
+                <p className="text-xs text-slate-500 truncate">{u.email}</p>
               </div>
-              <div className="flex items-center gap-3 self-start sm:self-center">
+              <div className="flex items-center justify-between sm:justify-end gap-3">
                 <span className="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-600 font-medium">
                   {u.rol}
                 </span>
                 <button
                   onClick={() => startEdit(u)}
-                  className="text-xs px-2 py-1 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-100"
+                  className="shrink-0 text-xs px-3 py-2 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-100"
                 >
                   Editar
                 </button>

@@ -1,11 +1,40 @@
 @import "tailwindcss";
 
+html {
+  /* Evita que algo ancho genere desplazamiento horizontal en el móvil. */
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  /* Quita el destello azul que aparece al tocar enlaces y botones en móvil. */
+  -webkit-tap-highlight-color: transparent;
 }
 
 .font-logo {
   font-family: 'Poppins', system-ui, sans-serif;
   letter-spacing: -0.02em;
+}
+
+/*
+ * iOS hace zoom automático al enfocar un campo cuya letra mida menos de 16px.
+ * Los campos usan text-sm (14px), así que en móvil se fuerza a 16px para
+ * evitar ese salto molesto al escribir.
+ */
+@media (max-width: 767px) {
+  input:not([type='checkbox']):not([type='radio']),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Respeta el borde superior en pantallas con notch o barra de estado. */
+.area-segura-arriba {
+  padding-top: max(0.625rem, env(safe-area-inset-top));
+}
+
+.area-segura-abajo {
+  padding-bottom: env(safe-area-inset-bottom);
 }
