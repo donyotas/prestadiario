@@ -37,15 +37,34 @@ const allowedOrigins = process.env.CORS_ORIGINS
   : defaultOrigins;
 
 app.use(
-  cors({
-    origin(origin, callback) {
-      // Permite peticiones sin origin (ej. curl, health checks) y las de la lista.
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error(`Origen no permitido por CORS: ${origin}`));
+  cors((req, callback) => {
+    const origin = req.headers.origin;
+    const host = req.headers.host;
+
+    // En produccion el SPA y la API se sirven desde el MISMO origen, pero el
+    // navegador manda la cabecera Origin en todos los POST (login, crear
+    // cliente, registrar pago). Si esa peticion del propio dominio no se
+    // reconoce, el login devuelve 500 y la app queda inservible. Por eso el
+    // mismo origen se permite siempre, sin depender de configurar la lista.
+    let mismoOrigen = false;
+    if (origin && host) {
+      try {
+        mismoOrigen = new URL(origin).host === host;
+      } catch {
+        mismoOrigen = false;
       }
-    },
+    }
+
+    // Permitidas: sin Origin (curl, health checks de la plataforma), el propio
+    // dominio, y los origenes declarados (Firebase, localhost, CORS_ORIGINS).
+    if (!origin || mismoOrigen || allowedOrigins.includes(origin)) {
+      return callback(null, { origin: true });
+    }
+
+    // Origen ajeno: no se acredita con cabeceras CORS, pero tampoco se rompe la
+    // peticion con un error. El navegador no podra leer la respuesta al no
+    // recibirlas, que es justo lo que queremos.
+    callback(null, { origin: false });
   })
 );
 app.use(express.json());
