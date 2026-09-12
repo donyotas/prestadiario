@@ -2,8 +2,9 @@ import { useEffect, useState, type FormEvent, type MouseEvent } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import api from '../api/client';
+import { formatoMoneda } from '../api/format';
 import { useAuth } from '../context/AuthContext';
-import type { Cliente, Usuario } from '../types';
+import type { Cliente, Prestamo, Usuario } from '../types';
 
 type ClienteForm = {
   nombre: string;
@@ -18,6 +19,7 @@ const FORM_VACIO: ClienteForm = { nombre: '', documento: '', telefono: '', direc
 export function Clientes() {
   const { user } = useAuth();
   const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [prestamos, setPrestamos] = useState<Prestamo[]>([]);
   const [cobradores, setCobradores] = useState<Usuario[]>([]);
   const [form, setForm] = useState<ClienteForm>(FORM_VACIO);
   const [error, setError] = useState<string | null>(null);
@@ -27,12 +29,13 @@ export function Clientes() {
   const [editForm, setEditForm] = useState<ClienteForm>(FORM_VACIO);
   const [editError, setEditError] = useState<string | null>(null);
 
-  function cargarClientes() {
+  function cargar() {
     api.get('/clientes').then((res) => setClientes(res.data));
+    api.get('/prestamos').then((res) => setPrestamos(res.data));
   }
 
   useEffect(() => {
-    cargarClientes();
+    cargar();
     if (user?.rol === 'ADMIN') {
       api
         .get('/users')
@@ -50,7 +53,7 @@ export function Clientes() {
       });
       setForm(FORM_VACIO);
       setShowForm(false);
-      cargarClientes();
+      cargar();
     } catch (err) {
       const msg = axios.isAxiosError(err) ? err.response?.data?.error : null;
       setError(msg ?? 'Error al crear el cliente');
@@ -88,12 +91,30 @@ export function Clientes() {
         cobradorId: Number(editForm.cobradorId),
       });
       setEditingId(null);
-      cargarClientes();
+      cargar();
     } catch (err) {
       const msg = axios.isAxiosError(err) ? err.response?.data?.error : null;
       setEditError(msg ?? 'Error al actualizar el cliente');
     }
   }
+
+  // Monto de préstamos por cliente. Se excluyen los cancelados, igual que en el
+  // resto de la app; los clientes sin préstamos quedan en cero.
+  const montosPorCliente = new Map<number, { cantidad: number; monto: number }>();
+  for (const p of prestamos) {
+    if (p.estado === 'CANCELADO') continue;
+    const acumulado = montosPorCliente.get(p.clienteId) ?? { cantidad: 0, monto: 0 };
+    acumulado.cantidad += 1;
+    acumulado.monto += p.montoTotal;
+    montosPorCliente.set(p.clienteId, acumulado);
+  }
+
+  const resumenPorCliente = clientes
+    .map((c) => ({ cliente: c, ...(montosPorCliente.get(c.id) ?? { cantidad: 0, monto: 0 }) }))
+    .sort((a, b) => b.monto - a.monto);
+
+  const totalGeneral = resumenPorCliente.reduce((acc, r) => acc + r.monto, 0);
+  const totalPrestamos = resumenPorCliente.reduce((acc, r) => acc + r.cantidad, 0);
 
   return (
     <div>
@@ -106,6 +127,52 @@ export function Clientes() {
           >
             {showForm ? 'Cancelar' : 'Nuevo cliente'}
           </button>
+        )}
+      </div>
+
+      <div className="bg-white border border-slate-200 rounded-lg mb-6">
+        <p className="px-4 py-3 text-sm font-semibold text-slate-900 border-b border-slate-200">
+          Monto de préstamos por cliente
+        </p>
+        {resumenPorCliente.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 text-left text-xs text-slate-500">
+                  <th className="px-4 py-2 font-medium">Cliente</th>
+                  <th className="px-4 py-2 font-medium text-right">Préstamos</th>
+                  <th className="px-4 py-2 font-medium text-right">Monto total</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {resumenPorCliente.map((r) => (
+                  <tr key={r.cliente.id} className="hover:bg-slate-50">
+                    <td className="px-4 py-3">
+                      <p className="font-medium text-slate-900">{r.cliente.nombre}</p>
+                      <p className="text-xs text-slate-500">{r.cliente.documento}</p>
+                    </td>
+                    <td className="px-4 py-3 text-right text-slate-600">{r.cantidad}</td>
+                    <td className="px-4 py-3 text-right font-medium text-slate-900">
+                      {formatoMoneda(r.monto)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="border-t border-slate-200 bg-slate-50">
+                  <td className="px-4 py-3 text-xs font-medium text-slate-500">Total</td>
+                  <td className="px-4 py-3 text-right text-sm font-medium text-slate-700">
+                    {totalPrestamos}
+                  </td>
+                  <td className="px-4 py-3 text-right text-sm font-bold text-slate-900">
+                    {formatoMoneda(totalGeneral)}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        ) : (
+          <p className="px-4 py-6 text-sm text-slate-500">No hay clientes aún.</p>
         )}
       </div>
 
