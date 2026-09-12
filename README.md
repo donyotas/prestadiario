@@ -29,6 +29,10 @@ npm run prisma:seed --prefix server
 npm run dev
 ```
 
+> El servidor también crea el esquema y el administrador inicial por su cuenta si la base está
+> vacía, así que los dos pasos de migración y seed solo hacen falta si prefieres preparar la base
+> de datos antes de arrancar.
+
 El frontend redirige las peticiones a `/api` hacia `http://localhost:4000` (configurado en
 `client/vite.config.ts`).
 
@@ -59,31 +63,75 @@ npm run build --prefix client            # build de producción
 
 ## Despliegue
 
-En producción, el backend sirve también el build del frontend desde el mismo proceso (un solo
-servicio, sin CORS ni URLs separadas):
+La app se publica como **dos servicios más una base de datos**, todo con capa gratuita:
+
+| Pieza | Servicio | Notas |
+| --- | --- | --- |
+| Frontend (estáticos) | **Firebase Hosting** | Sirve `client/dist` |
+| Backend (API) | **Render** (plan Free) | Se duerme tras ~15 min de inactividad |
+| Base de datos | **Turso** | SQLite en la nube, persistente |
+
+### ¿Por qué no se usa el SQLite local en producción?
+
+Porque el disco de cualquier plataforma sin servidor (Render, Cloud Run, etc.) es **efímero**: el
+archivo `.db` se borra en cada despliegue y en cada reinicio, así que se perderían todos los datos.
+Turso es SQLite gestionado, y el backend se conecta a él con `@libsql/client`, de modo que en
+producción los datos sí persisten. En local se sigue usando un archivo SQLite normal.
+
+El esquema se aplica automáticamente al arrancar el servidor (`src/lib/ensureDatabase.ts`), que
+también crea el administrador inicial si la base está vacía. Es idempotente.
+
+### Variables de entorno
+
+**Backend (Render):**
+
+- `DATABASE_URL` — `libsql://<tu-base>.turso.io`
+- `TURSO_AUTH_TOKEN` — el token de Turso
+- `JWT_SECRET` — un valor largo y aleatorio, distinto al de desarrollo
+- `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NOMBRE` — credenciales del primer administrador
+- *(Opcional)* `CORS_ORIGINS` — orígenes permitidos, separados por comas
+
+`PORT` lo define Render automáticamente.
+
+**Frontend (se incrusta en el build):**
+
+- `VITE_API_URL` — la URL del backend terminada en `/api`, p. ej.
+  `https://prestadiario-api.onrender.com/api`. Como Vite la incrusta al compilar, hay que
+  definirla en `client/.env.production` **antes** de ejecutar el build.
+
+### Pasos
 
 ```bash
-npm run build   # instala dependencias y compila client/ y server/
-npm start       # aplica migraciones pendientes (prisma migrate deploy) y arranca el servidor
+# 1. Compilar el frontend apuntando al backend
+echo "VITE_API_URL=https://TU-BACKEND.onrender.com/api" > client/.env.production
+npm run build --prefix client
+
+# 2. Publicar en Firebase Hosting
+npm install -g firebase-tools   # o usa: npx firebase-tools
+firebase login
+firebase deploy --only hosting
 ```
 
-Variables de entorno requeridas en el servicio de producción (ver `server/.env.example`):
+El backend en Render se despliega desde el repositorio de GitHub con:
 
-- `DATABASE_URL` — para SQLite, `file:./dev.db` (o una ruta dentro de un disco persistente si la
-  plataforma lo soporta; de lo contrario los datos se reinician en cada despliegue).
-- `JWT_SECRET` — un valor secreto propio, distinto al de desarrollo.
-- `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NOMBRE` — usados por `npm run prisma:seed --prefix server`
-  para crear el primer administrador (correrlo una sola vez tras el primer despliegue).
-- `PORT` — la mayoría de plataformas (Railway incluida) la define automáticamente.
+- **Build Command:** `npm install --prefix server && npm run build --prefix server`
+- **Start Command:** `npm start --prefix server`
 
-### Railway
+### Trabajar con el esquema
 
-1. En [railway.app](https://railway.app), *New Project → Deploy from GitHub repo* y selecciona este
-   repositorio.
-2. En la configuración del servicio: *Build Command* `npm run build`, *Start Command* `npm start`.
-3. Agrega las variables de entorno de la lista de arriba.
-4. Tras el primer deploy, corre el seed una vez desde la pestaña *Shell* del servicio en Railway:
-   `npm run prisma:seed --prefix server`.
-5. (Opcional pero recomendado si no es solo una demo) Agrega un *Volume* montado en, por ejemplo,
-   `/data`, y usa `DATABASE_URL=file:/data/prestadiario.db` para que la base de datos SQLite no se
-   pierda en cada redeploy.
+En local sigue funcionando el flujo normal de Prisma sobre SQLite:
+
+```bash
+npm run prisma:migrate --prefix server   # crea/aplica migraciones en dev.db
+npm run prisma:studio --prefix server    # explorador visual
+```
+
+Como el CLI de Prisma no puede hablar el protocolo HTTP de Turso, para producción el esquema se
+genera como DDL y se aplica al arrancar:
+
+```bash
+npm run prisma:schema --prefix server    # regenera prisma/schema.sql
+```
+
+Si cambias `schema.prisma`, corre `prisma:migrate` en local y luego `prisma:schema` para mantener
+`schema.sql` al día.

@@ -9,6 +9,7 @@ import clientesRouter from './routes/clientes';
 import prestamosRouter from './routes/prestamos';
 import cuotasRouter from './routes/cuotas';
 import dashboardRouter from './routes/dashboard';
+import { ensureDatabase } from './lib/ensureDatabase';
 
 const app = express();
 
@@ -67,6 +68,16 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 });
 
 const PORT = Number(process.env.PORT) || 4000;
-app.listen(PORT, () => {
-  console.log(`Servidor escuchando en http://localhost:${PORT}`);
-});
+
+// Prepara la base de datos (crea el esquema y el admin inicial si hace falta)
+// antes de aceptar peticiones. Es idempotente: en arranques posteriores no hace nada.
+ensureDatabase()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Servidor escuchando en http://localhost:${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('No se pudo preparar la base de datos:', err);
+    process.exit(1);
+  });
