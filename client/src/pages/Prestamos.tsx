@@ -4,13 +4,23 @@ import axios from 'axios';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { formatoMoneda } from '../api/format';
-import type { Cliente, Prestamo } from '../types';
+import type { Cliente, FrecuenciaCuota, Prestamo } from '../types';
 
 const ESTADO_COLOR: Record<string, string> = {
   ACTIVO: 'bg-blue-100 text-blue-700',
   PAGADO: 'bg-green-100 text-green-700',
   ATRASADO: 'bg-red-100 text-red-700',
   CANCELADO: 'bg-slate-100 text-slate-500',
+};
+
+// El mes se cuenta como 30 días, igual que en el cálculo de intereses del backend.
+const DIAS_POR_MES = 30;
+
+// Cuántos días cubre cada cuota según la frecuencia de pago.
+const DIAS_POR_CUOTA: Record<FrecuenciaCuota, number> = {
+  DIARIA: 1,
+  SEMANAL: 7,
+  MENSUAL: 30,
 };
 
 export function Prestamos() {
@@ -25,11 +35,19 @@ export function Prestamos() {
     clienteId: clienteIdFiltro ?? '',
     capital: '',
     tasaMensual: '',
-    plazoDias: '',
-    numeroCuotas: '',
-    frecuenciaCuota: 'DIARIA',
+    tiempo: '1',
+    unidadTiempo: 'MESES' as 'DIAS' | 'MESES',
+    frecuenciaCuota: 'DIARIA' as FrecuenciaCuota,
     fechaInicio: new Date().toISOString().slice(0, 10),
   });
+
+  // El plazo y las cuotas no se escriben a mano: se deducen del tiempo elegido.
+  // La frecuencia semanal se redondea hacia arriba para cubrir el plazo completo.
+  const cantidadTiempo = Number(form.tiempo) || 0;
+  const plazoDias =
+    form.unidadTiempo === 'MESES' ? cantidadTiempo * DIAS_POR_MES : cantidadTiempo;
+  const numeroCuotas =
+    plazoDias > 0 ? Math.ceil(plazoDias / DIAS_POR_CUOTA[form.frecuenciaCuota]) : 0;
 
   function cargar() {
     api.get('/prestamos').then((res) => setPrestamos(res.data));
@@ -51,10 +69,10 @@ export function Prestamos() {
       await api.post('/prestamos', {
         clienteId: Number(form.clienteId),
         capital: Number(form.capital),
-        // Si se dejan en blanco se aplican los valores por defecto del negocio.
+        // Si se deja en blanco se aplica el valor por defecto del negocio.
         tasaMensual: form.tasaMensual === '' ? 20 : Number(form.tasaMensual),
-        plazoDias: form.plazoDias === '' ? 30 : Number(form.plazoDias),
-        numeroCuotas: form.numeroCuotas === '' ? 30 : Number(form.numeroCuotas),
+        plazoDias,
+        numeroCuotas,
         frecuenciaCuota: form.frecuenciaCuota,
         fechaInicio: form.fechaInicio,
       });
@@ -117,27 +135,32 @@ export function Prestamos() {
             className="border border-slate-300 rounded-md px-3 py-2 text-sm"
           />
           <input
+            required
             type="number"
             min="1"
-            placeholder="Plazo en días (30)"
-            value={form.plazoDias}
-            onChange={(e) => setForm({ ...form, plazoDias: e.target.value })}
-            className="border border-slate-300 rounded-md px-3 py-2 text-sm"
-          />
-          <input
-            type="number"
-            min="1"
-            placeholder="Número de cuotas (30)"
-            value={form.numeroCuotas}
-            onChange={(e) => setForm({ ...form, numeroCuotas: e.target.value })}
+            placeholder="Tiempo"
+            value={form.tiempo}
+            onChange={(e) => setForm({ ...form, tiempo: e.target.value })}
             className="border border-slate-300 rounded-md px-3 py-2 text-sm"
           />
           <select
-            value={form.frecuenciaCuota}
-            onChange={(e) => setForm({ ...form, frecuenciaCuota: e.target.value })}
+            value={form.unidadTiempo}
+            onChange={(e) =>
+              setForm({ ...form, unidadTiempo: e.target.value as 'DIAS' | 'MESES' })
+            }
             className="border border-slate-300 rounded-md px-3 py-2 text-sm"
           >
-            <option value="DIARIA">Diaria</option>
+            <option value="DIAS">Días</option>
+            <option value="MESES">Meses (30 días)</option>
+          </select>
+          <select
+            value={form.frecuenciaCuota}
+            onChange={(e) =>
+              setForm({ ...form, frecuenciaCuota: e.target.value as FrecuenciaCuota })
+            }
+            className="border border-slate-300 rounded-md px-3 py-2 text-sm"
+          >
+            <option value="DIARIA">Diario</option>
             <option value="SEMANAL">Semanal</option>
             <option value="MENSUAL">Mensual</option>
           </select>
@@ -148,6 +171,24 @@ export function Prestamos() {
             onChange={(e) => setForm({ ...form, fechaInicio: e.target.value })}
             className="border border-slate-300 rounded-md px-3 py-2 text-sm"
           />
+          <div>
+            <label className="block text-xs text-slate-500 mb-1">Plazo</label>
+            <input
+              readOnly
+              tabIndex={-1}
+              value={`${plazoDias} ${plazoDias === 1 ? 'día' : 'días'}`}
+              className="w-full border border-slate-200 bg-slate-50 text-slate-600 rounded-md px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-slate-500 mb-1">Cuotas</label>
+            <input
+              readOnly
+              tabIndex={-1}
+              value={`${numeroCuotas} ${numeroCuotas === 1 ? 'cuota' : 'cuotas'}`}
+              className="w-full border border-slate-200 bg-slate-50 text-slate-600 rounded-md px-3 py-2 text-sm"
+            />
+          </div>
           {error && <p className="sm:col-span-2 text-sm text-red-600">{error}</p>}
           <button
             type="submit"
