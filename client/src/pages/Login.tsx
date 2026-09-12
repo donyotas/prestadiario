@@ -30,7 +30,11 @@ export function Login() {
         onSubmit={handleSubmit}
         className="bg-white shadow rounded-lg p-8 w-full max-w-sm space-y-4"
       >
-        <h1 className="font-logo text-xl font-extrabold text-green-900 tracking-wide">Prestadiario</h1>
+        <img
+          src="/logo.png"
+          alt="Prestadiario"
+          className="mx-auto h-20 sm:h-24 w-auto max-w-full object-contain"
+        />
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
           <input
